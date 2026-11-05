@@ -1,0 +1,35 @@
+# Render Blueprint for the hosted Teller connector.
+# Render prompts you for every value marked `sync: false`; none of your secrets live in this file.
+services:
+  - type: web
+    name: teller-bank-sync
+    runtime: node
+    # A paid instance is used on purpose: free web services spin down when idle, and the
+    # encrypted bank-login file needs a persistent disk. Confirm the current plan names and
+    # prices in the Render dashboard before you click create.
+    plan: starter
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: false # redeploy by hand, so nothing changes under a server that holds bank access
+    disk:
+      name: teller-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: TELLER_ENV
+        value: development # sandbox = fake banks, development = real banks (free, 100 limit), production = billed
+      - key: TELLER_DATA_DIR
+        value: /data
+      - key: TELLER_APPLICATION_ID
+        sync: false
+      - key: TELLER_CERT_PEM
+        sync: false
+      - key: TELLER_KEY_PEM
+        sync: false
+      - key: MCP_BEARER_TOKEN
+        sync: false
+      - key: TELLER_STORE_KEY
+        sync: false
