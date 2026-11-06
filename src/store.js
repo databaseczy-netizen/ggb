@@ -11,8 +11,10 @@ const SALT = 'teller-bank-sync/store/v1';
  * what you want on a hosted disk.
  */
 export class Store {
-  constructor(dir, { key } = {}) {
+  constructor(dir, { key, seed } = {}) {
     this.dir = dir;
+    // Optional encrypted copy of the store supplied by the host (for hosts with no persistent disk).
+    this.seed = seed || null;
     this.file = path.join(dir, 'enrollments.json');
     this.encryptionEnabled = Boolean(key);
     this._key = key ? crypto.scryptSync(key, SALT, 32) : null;
@@ -60,8 +62,9 @@ export class Store {
     try {
       raw = fs.readFileSync(this.file, 'utf8');
     } catch (e) {
-      if (e.code === 'ENOENT') return [];
-      throw new Error(`Cannot read ${this.file}: ${e.message}`);
+      if (e.code !== 'ENOENT') throw new Error(`Cannot read ${this.file}: ${e.message}`);
+      if (!this.seed) return [];
+      raw = this.seed.trim().startsWith('{') ? this.seed : Buffer.from(this.seed, 'base64').toString('utf8');
     }
     let parsed;
     try {
@@ -81,6 +84,12 @@ export class Store {
     const tmp = `${this.file}.${process.pid}.tmp`;
     fs.writeFileSync(tmp, this._key ? this._encrypt(json) : json, { mode: 0o600 });
     fs.renameSync(tmp, this.file);
+  }
+
+  /** The encrypted store as one line of text, to be saved as the host's TELLER_STORE_BLOB setting. */
+  exportBlob() {
+    if (!this._key) return null;
+    return Buffer.from(this._encrypt(JSON.stringify(this._readAll())), 'utf8').toString('base64');
   }
 
   /** Every enrollment, or only those for one environment (tokens only work where they were made). */
