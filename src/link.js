@@ -43,6 +43,10 @@ export function page({ applicationId, environment, enrollmentId }) {
   <p>You sign in inside Teller's secure window. Your bank password is never typed into this page or into Claude, and the access token stays on this computer.</p>
   <button id="go" type="button">Connect a bank</button>
   <p id="msg" role="status"></p>
+  <div id="blob" style="display:none">
+    <p>This server keeps no disk. Copy the text below into your host's <b>TELLER_STORE_BLOB</b> setting and restart, or this bank will be forgotten when the server restarts. It is encrypted and useless without your store key.</p>
+    <textarea readonly rows="5" style="width:100%;box-sizing:border-box" onclick="this.select()"></textarea>
+  </div>
 </main>
 <script src="https://cdn.teller.io/connect/connect.js"></script>
 <script>
@@ -75,6 +79,11 @@ export function page({ applicationId, environment, enrollmentId }) {
           if (j && j.ok) {
             msg.textContent = "Linked " + j.institution + ". You can close this tab and go back to Claude.";
             go.disabled = true;
+            if (j.store_blob) {
+              var box = document.getElementById("blob");
+              box.style.display = "block";
+              box.querySelector("textarea").value = j.store_blob;
+            }
           } else {
             msg.textContent = "Could not save the connection: " + ((j && j.error) || "unknown error");
           }
