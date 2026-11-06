@@ -38,6 +38,8 @@ export function loadConfig(env = process.env) {
     publicUrl: clean(env.PUBLIC_URL) || clean(env.RENDER_EXTERNAL_URL),
     bearerToken: clean(env.MCP_BEARER_TOKEN),
     storeKey: clean(env.TELLER_STORE_KEY),
+    // Hosts with no persistent disk keep the encrypted store in this setting instead.
+    storeBlob: clean(env.TELLER_STORE_BLOB),
     dataDir:
       expandHome(clean(env.TELLER_DATA_DIR)) || path.join(os.homedir(), '.teller-claude'),
     // Overridable for tests only. Real use always talks to Teller.
