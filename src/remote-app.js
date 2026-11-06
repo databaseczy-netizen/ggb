@@ -19,7 +19,7 @@ const sha = (s) => crypto.createHash('sha256').update(s).digest();
  * (req, res) handler so it can run behind any host and be tested offline.
  */
 export function createRemoteApp({ cfg, store, bank }) {
-  store = store || new Store(cfg.dataDir, { key: cfg.storeKey });
+  store = store || new Store(cfg.dataDir, { key: cfg.storeKey, seed: cfg.storeBlob });
   bank = bank || new BankData(cfg, store);
 
   const linkSessions = new Map();
@@ -166,7 +166,7 @@ export function createRemoteApp({ cfg, store, bank }) {
         linkSessions.delete(m[1]); // one bank per link
         if (session.onLinked) session.onLinked();
         bank.invalidate();
-        return send(res, 200, { ok: true, institution });
+        return send(res, 200, { ok: true, institution, store_blob: store.exportBlob() });
       } catch (e) {
         return send(res, 400, { ok: false, error: e.message });
       }
